@@ -96,12 +96,23 @@ function PublicForm({ slug }) {
     if (contactError) { setError(contactError.message); return; }
 
     const { error: responseError } = await supabase.from('form_responses').insert({
-      event_id: event.id,
-      contact_id: contact.id,
-      status: 'confirmado',
-      token: crypto.randomUUID(),
-      answers: { dietary: form.dietary, interests: form.interests }
-    });
+  event_id: event.id,
+  contact_id: contact.id,
+  token: crypto.randomUUID(),
+
+  full_name: form.name,
+  email: form.email,
+  phone: form.phone,
+  company: form.company,
+  position: form.role,
+  segment: form.segment,
+
+  status: 'confirmado',
+  answers: {
+    dietary: form.dietary,
+    interests: form.interests
+  }
+});
 
     if (responseError) { setError(responseError.message); return; }
     setSent(true);
