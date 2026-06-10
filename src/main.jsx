@@ -119,7 +119,24 @@ function PublicForm({ slug }) {
   }
 
   if (loading) return <main className="center"><div className="card">Carregando...</div></main>;
-  if (sent) return <main className="center"><div className="card success"><CheckCircle2 size={44}/><h1>Presença confirmada!</h1><p>Obrigado. Seus dados foram registrados no GM Connect.</p><a className="button" href="/">Voltar</a></div></main>;
+  if (sent)
+  return (
+    <main className="center">
+      <div className="card success">
+        <CheckCircle2 size={44}/>
+        <h1>Presença confirmada!</h1>
+        <p>Obrigado. Seus dados foram registrados no GM Connect.</p>
+
+        <button
+          type="button"
+          className="button"
+          onClick={() => window.location.reload()}
+        >
+          Nova confirmação
+        </button>
+      </div>
+    </main>
+  );
 
   return (
     <main className="formPage">
