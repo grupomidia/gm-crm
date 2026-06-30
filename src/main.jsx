@@ -2,14 +2,8 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { CalendarDays, CheckCircle2, Download, Search, Users } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
+import PublicForm from './pages/PublicForm';
 import './styles.css';
-
-const defaultEvent = {
-  title: 'Healthcare Conference 2026',
-  slug: 'healthcare-conference-2026',
-  description: 'Confirme sua presença em um evento do Grupo Mídia.',
-  location: 'São Paulo, SP'
-};
 
 function App() {
   const path = window.location.pathname;
@@ -37,135 +31,6 @@ function Home() {
 function ConfigWarning() {
   if (isSupabaseConfigured) return null;
   return <div className="warning">Configure o arquivo <strong>.env</strong> com as chaves do Supabase para salvar dados reais.</div>;
-}
-
-function PublicForm({ slug }) {
-  const [event, setEvent] = React.useState(defaultEvent);
-  const [loading, setLoading] = React.useState(true);
-  const [sent, setSent] = React.useState(false);
-  const [error, setError] = React.useState('');
-  const [form, setForm] = React.useState({
-    name: '', email: '', phone: '', company: '', role: '', segment: 'Executivo(a)',
-    dietary: '', interests: []
-  });
-
-  React.useEffect(() => {
-    async function loadEvent() {
-      if (!isSupabaseConfigured) return setLoading(false);
-      const { data } = await supabase.from('events').select('*').eq('slug', slug).single();
-      if (data) setEvent(data);
-      setLoading(false);
-    }
-    loadEvent();
-  }, [slug]);
-
-  function update(field, value) { setForm(prev => ({ ...prev, [field]: value })); }
-
-  function toggleInterest(value) {
-    setForm(prev => ({
-      ...prev,
-      interests: prev.interests.includes(value)
-        ? prev.interests.filter(item => item !== value)
-        : [...prev.interests, value]
-    }));
-  }
-
-  async function submit(e) {
-    e.preventDefault();
-    setError('');
-    if (!form.name || !form.email || !form.company) {
-      setError('Preencha nome, e-mail e empresa.');
-      return;
-    }
-    if (!isSupabaseConfigured) { setSent(true); return; }
-
-    const { data: contact, error: contactError } = await supabase
-      .from('contacts')
-      .upsert({
-        name: form.name,
-        email: form.email,
-        phone: form.phone,
-        company: form.company,
-        role: form.role,
-        segment: form.segment,
-        tags: form.interests
-      }, { onConflict: 'email' })
-      .select()
-      .single();
-
-    if (contactError) { setError(contactError.message); return; }
-
-    const { error: responseError } = await supabase.from('form_responses').insert({
-  event_id: event.id,
-  contact_id: contact.id,
-  token: crypto.randomUUID(),
-
-  full_name: form.name,
-  email: form.email,
-  phone: form.phone,
-  company: form.company,
-  position: form.role,
-  segment: form.segment,
-
-  status: 'confirmado',
-  answers: {
-    dietary: form.dietary,
-    interests: form.interests
-  }
-});
-
-    if (responseError) { setError(responseError.message); return; }
-    setSent(true);
-  }
-
-  if (loading) return <main className="center"><div className="card">Carregando...</div></main>;
-  if (sent)
-  return (
-    <main className="center">
-      <div className="card success">
-        <CheckCircle2 size={44}/>
-        <h1>Presença confirmada!</h1>
-        <p>Obrigado. Seus dados foram registrados no GM Connect.</p>
-
-        <button
-          type="button"
-          className="button"
-          onClick={() => window.location.reload()}
-        >
-          Nova confirmação
-        </button>
-      </div>
-    </main>
-  );
-
-  return (
-    <main className="formPage">
-      <form className="formCard" onSubmit={submit}>
-        <ConfigWarning />
-        <div className="badge">Confirmação de presença</div>
-        <h1>{event.title}</h1>
-        <p>{event.description}</p>
-        <p className="muted"><CalendarDays size={16}/> {event.location || 'Local a confirmar'}</p>
-        {error && <div className="error">{error}</div>}
-        <div className="grid two">
-          <label>Nome completo<input value={form.name} onChange={e => update('name', e.target.value)} /></label>
-          <label>E-mail<input type="email" value={form.email} onChange={e => update('email', e.target.value)} /></label>
-          <label>Telefone/WhatsApp<input value={form.phone} onChange={e => update('phone', e.target.value)} /></label>
-          <label>Empresa<input value={form.company} onChange={e => update('company', e.target.value)} /></label>
-          <label>Cargo<input value={form.role} onChange={e => update('role', e.target.value)} /></label>
-          <label>Segmento<select value={form.segment} onChange={e => update('segment', e.target.value)}><option>Executivo(a)</option><option>Hospital</option><option>Patrocinador</option><option>Fornecedor</option><option>Imprensa</option><option>Speaker</option></select></label>
-        </div>
-        <label>Restrição alimentar<input value={form.dietary} onChange={e => update('dietary', e.target.value)} placeholder="Opcional" /></label>
-        <fieldset>
-          <legend>Interesses</legend>
-          {['Gestão em saúde','Inovação','Tecnologia','ESG','Liderança','Relacionamento comercial'].map(item => (
-            <label className="check" key={item}><input type="checkbox" checked={form.interests.includes(item)} onChange={() => toggleInterest(item)} />{item}</label>
-          ))}
-        </fieldset>
-        <button className="button full">Confirmar presença</button>
-      </form>
-    </main>
-  );
 }
 
 function Admin() {
