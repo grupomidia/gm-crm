@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Healthcare Conference CMS | Administrador</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Aviso do Modo Demo / Configuração Placeholder -->
+  <div id="firebasePlaceholderNotice" class="creative-card" style="display: none; position: fixed; top: 1rem; right: 1rem; z-index: 10000; max-width: 320px; background: rgba(30, 20, 50, 0.9); border: 1px solid rgba(255, 100, 100, 0.3); padding: 16px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); flex-direction: column; gap: 10px;">
+    <small style="color: #ff5555; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em;">Modo de Simulação Ativo</small>
+    <p style="font-size: 0.8rem; margin: 0; line-height: 1.4; color: #d1d5db;">Usando <code>localStorage</code>. Para ativar o banco remoto no Firebase, configure suas chaves em <code>firebase.js</code>.</p>
+    <button onclick="this.parentElement.style.display='none'" class="mini-btn" style="align-self: flex-end;">Entendido</button>
+  </div>
+
+  <!-- Tela de Login -->
+  <section id="loginScreen" style="display: none;">
+    <div class="login-card">
+      <div class="login-header">
+        <span class="login-logo">HEALTHCARE</span>
+        <span class="login-subtitle">CONFERENCE CMS</span>
+        <span class="login-title-badge">Acesso Editorial Restrito</span>
+      </div>
+
+      <div class="login-error-box" id="loginError"></div>
+
+      <form class="login-form" id="loginForm">
+        <div class="login-field">
+          <label for="loginEmail">E-mail Corporativo</label>
+          <input type="email" id="loginEmail" required placeholder="Ex.: admin@healthcare2026.com" autocomplete="email" />
+        </div>
+
+        <div class="login-field">
+          <label for="loginPassword">Senha de Acesso</label>
+          <div class="login-input-wrapper">
+            <input type="password" id="loginPassword" required placeholder="••••••••" autocomplete="current-password" />
+            <button type="button" class="password-toggle-btn" id="togglePassBtn" aria-label="Mostrar/Ocultar senha">👁️</button>
+          </div>
+        </div>
+
+        <button type="submit" class="login-submit-btn" id="loginBtn">
+          <span id="loginBtnText">Entrar no CMS</span>
+          <div class="spinner" id="loginSpinner"></div>
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Container principal do App Shell -->
+  <div id="appShell" style="display: none;">
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Menu principal">
+        <div class="brand">
+          <div>
+            <strong>HEALTHCARE</strong>
+            <span>CONFERENCE</span>
+          </div>
+          <i class="gradient-line"></i>
+        </div>
+
+        <nav class="nav">
+          <a href="#dashboard" class="active">Painel Principal</a>
+          <a href="#speakers">Palestrantes</a>
+          <a href="#assets" id="openAssetsNav">Gerador de Cards</a>
+        </nav>
+
+        <!-- Perfil do Usuário Logado -->
+        <div class="user-profile-card">
+          <div class="user-avatar-group">
+            <div class="avatar-circle" id="userAvatarCircle">U</div>
+            <div class="user-meta">
+              <span class="user-email" id="userEmailDisplay">carregando...</span>
+              <span class="user-role-badge" id="userRoleBadge">carregando...</span>
+            </div>
+          </div>
+          <button class="mini-btn danger full-width" id="logoutBtn" type="button">Sair da Conta</button>
+        </div>
+
+        <div class="sidebar-card">
+          <small>Edição Atual</small>
+          <strong>Healthcare 2026</strong>
+          <span>17 a 20 de setembro<br>Hotel JP - Ribeirão Preto/SP</span>
+        </div>
+        
+        <div class="db-export-card">
+          <small>Dados Administrativos</small>
+          <div class="btn-group">
+            <button class="mini-btn" id="exportJsonBtn" type="button">Exportar JSON</button>
+            <button class="mini-btn" id="exportCsvBtn" type="button">Exportar CSV</button>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <button class="menu-btn" type="button" aria-label="Abrir menu">☰</button>
+          <div class="topbar-main">
+            <p>Mandato do Futuro</p>
+            <h1>Gestão de Conteúdo Editorial</h1>
+          </div>
+          <div class="topbar-controls">
+            <!-- Status de Conexão Firebase -->
+            <div id="firebaseStatus" class="firebase-status offline">
+              <span class="status-indicator-dot"></span>
+              <span id="firebaseStatusText">Offline</span>
+            </div>
+
+            <div class="control-group">
+              <small>Evento</small>
+              <select id="eventSelect">
+                <option value="hc2026">Healthcare Conference 2026</option>
+                <option value="ihc2026">Infra Healthcare 2026</option>
+                <option value="gs2026">Gestão em Saúde 2026</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <small>Nível de Acesso</small>
+              <select id="roleSelect">
+                <option value="admin">Administrador (Total)</option>
+                <option value="editor">Editor (Gravação)</option>
+                <option value="revisor">Revisor (Aprovação)</option>
+                <option value="viewer">Visualizador (Leitura)</option>
+              </select>
+            </div>
+          </div>
+        </header>
+
+      <!-- Dashboard Statistics -->
+      <section class="stats-grid" aria-label="Indicadores">
+        <article>
+          <small>Palestrantes</small>
+          <strong id="totalSpeakers">0</strong>
+          <span>Cadastrados no total</span>
+        </article>
+        <article>
+          <small>Publicados</small>
+          <strong id="publishedSpeakers">0</strong>
+          <span>Visíveis no site do evento</span>
+        </article>
+        <article>
+          <small>Pendentes</small>
+          <strong id="pendingSpeakers">0</strong>
+          <span>Em edição (Rascunho)</span>
+        </article>
+        <article>
+          <small>Em revisão</small>
+          <strong id="reviewSpeakers">0</strong>
+          <span>Aguardando curadoria</span>
+        </article>
+      </section>
+
+      <!-- Panel for CRUD and Speakers Listing -->
+      <section class="panel speakers-panel" id="speakersSection">
+        <div class="panel-header">
+          <div>
+            <span class="eyebrow">Interface Administrativa</span>
+            <h3>Palestrantes Cadastrados</h3>
+          </div>
+          <div class="header-actions">
+            <button class="ghost-btn" type="button" id="headerGenerateAll">Gerar todos os cards</button>
+            <button class="primary-btn" type="button" id="newSpeakerBtn">+ Novo Palestrante</button>
+          </div>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="filters">
+          <div class="search-box">
+            <label for="searchInput">Buscar</label>
+            <input id="searchInput" type="search" placeholder="Nome, cargo ou empresa" />
+          </div>
+          <div class="filter-box">
+            <label for="forumFilter">Fórum</label>
+            <select id="forumFilter">
+              <option value="all">Todos os Fóruns</option>
+              <option value="Tecnologia">Tecnologia</option>
+              <option value="Infraestrutura">Infraestrutura</option>
+              <option value="Gestão">Gestão</option>
+            </select>
+          </div>
+          <div class="filter-box">
+            <label for="statusFilter">Status</label>
+            <select id="statusFilter">
+              <option value="all">Todos os Status</option>
+              <option value="Rascunho">Rascunho</option>
+              <option value="Revisão">Revisão</option>
+              <option value="Aprovado">Aprovado</option>
+              <option value="Publicado">Publicado</option>
+            </select>
+          </div>
+          <div class="filter-box">
+            <label for="visibilityFilter">Visibilidade</label>
+            <select id="visibilityFilter">
+              <option value="all">Todos</option>
+              <option value="visibleSite">Visível no Site</option>
+              <option value="visibleFeed">Visível no Feed</option>
+              <option value="visibleStory">Visível no Story</option>
+            </select>
+          </div>
+          <div class="filter-box">
+            <label for="sortFilter">Ordenação</label>
+            <select id="sortFilter">
+              <option value="ordem">Ordem de Exibição</option>
+              <option value="nome">Nome (A-Z)</option>
+              <option value="recente">Cadastros Recentes</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Speaker List Table -->
+        <div class="table-responsive">
+          <table class="speakers-table">
+            <thead>
+              <tr>
+                <th>Foto</th>
+                <th>Nome / Perfil</th>
+                <th>Fórum</th>
+                <th>Status</th>
+                <th>Visibilidade</th>
+                <th>Ordem</th>
+                <th class="actions-header">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="speakerTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+        
+        <div id="noSpeakersMessage" class="creative-card text-center" style="display: none;">
+          <strong>Nenhum perfil encontrado</strong>
+          <p>Altere os filtros de pesquisa ou cadastre um novo palestrante utilizando o botão "+ Novo Palestrante".</p>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+  <!-- Speaker Form Modal (Edit / Create) -->
+  <dialog class="modal" id="speakerModal">
+    <form method="dialog" class="modal-card" id="speakerForm">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow" id="modalSubTitle">Cadastro</span>
+          <h3 id="modalTitle">Novo Palestrante</h3>
+        </div>
+        <button class="icon-btn" value="cancel" type="button" id="closeFormBtn" aria-label="Fechar modal">×</button>
+      </div>
+
+      <input type="hidden" id="speakerId" />
+
+      <div class="form-grid">
+        <label>Nome completo *<input id="name" required placeholder="Ex.: Atualpa Aguiar" /></label>
+        <label>Cargo *<input id="role" required placeholder="Ex.: Diretor de Tecnologia" /></label>
+        <label>Empresa *<input id="company" required placeholder="Ex.: MedSênior" /></label>
+        <label>Fórum
+          <select id="forum" required>
+            <option value="Tecnologia">Tecnologia</option>
+            <option value="Infraestrutura">Infraestrutura</option>
+            <option value="Gestão">Gestão</option>
+          </select>
+        </label>
+        <label>Tipo
+          <select id="type" required>
+            <option value="Palestrante">Palestrante</option>
+            <option value="Curador">Curador</option>
+            <option value="Moderador">Moderador</option>
+            <option value="Keynote">Keynote</option>
+          </select>
+        </label>
+        <label>Ordem de exibição *<input type="number" id="displayOrder" required value="0" min="0" /></label>
+        <label>LinkedIn (URL)<input type="url" id="linkedin" placeholder="Ex.: https://linkedin.com/in/atualpa" /></label>
+        <label>Instagram (Usuário)<input id="instagram" placeholder="Ex.: @atualpa.aguiar" /></label>
+      </div>
+
+      <div class="form-row">
+        <label>Bio curta (Resumo para Cards)<input id="shortBio" maxlength="150" placeholder="Ex.: Curador do Fórum de Tecnologia e CIO da MedSênior" /></label>
+      </div>
+      <div class="form-row">
+        <label>Bio completa (Detalhado para o Site)<textarea id="fullBio" rows="3" placeholder="Fale sobre a carreira do palestrante, especialidades, formação e histórico no setor da saúde."></textarea></label>
+      </div>
+
+      <!-- Photo upload, Removal simulator & preview -->
+      <div class="photo-section">
+        <div class="photo-left">
+          <div class="upload-box">
+            <input id="photoInput" type="file" accept="image/*" style="display: none;" />
+            <button type="button" class="secondary-btn" id="triggerUploadBtn">Fazer Upload de Foto</button>
+            <div>
+              <strong>Foto do Palestrante</strong>
+              <span>Escolha um retrato de rosto frontal (PNG/JPG).</span>
+            </div>
+          </div>
+          <div class="photo-actions" id="photoActionsRow" style="display: none;">
+            <button type="button" class="mini-btn active-toggle" id="toggleBgRemovalBtn">Remover Fundo (Simulado)</button>
+            <button type="button" class="mini-btn active-toggle" id="toggleGrayscaleBtn">Aplicar P&B</button>
+            <button type="button" class="mini-btn danger" id="deletePhotoBtn">Excluir Foto</button>
+          </div>
+        </div>
+        <div class="photo-previews">
+          <div class="preview-item">
+            <span>Original</span>
+            <div class="photo-frame" id="originalPhotoFrame">
+              <span class="placeholder-text">Sem Foto</span>
+            </div>
+          </div>
+          <div class="preview-item">
+            <span>Tratada (Prévia)</span>
+            <div class="photo-frame" id="processedPhotoFrame">
+              <span class="placeholder-text">Sem Foto</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visibility checklist -->
+      <fieldset class="visibility">
+        <legend>Visibilidade nos canais</legend>
+        <label><input id="visibleSite" type="checkbox" checked> Visível no Site</label>
+        <label><input id="visibleFeed" type="checkbox" checked> Habilitar Geração Feed</label>
+        <label><input id="visibleStory" type="checkbox" checked> Habilitar Geração Story</label>
+      </fieldset>
+
+      <!-- Actions -->
+      <div class="modal-actions">
+        <button class="ghost-btn" type="button" id="cancelFormBtn">Cancelar</button>
+        <div class="action-status-buttons">
+          <button class="secondary-btn" type="button" id="btnSaveDraft">Salvar Rascunho</button>
+          <button class="secondary-btn" type="button" id="btnSendReview">Enviar p/ Revisão</button>
+          <button class="primary-btn" type="button" id="btnPublish">Publicar</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- High fidelity Card Generator Modal -->
+  <dialog class="modal wide-modal" id="cardGeneratorModal">
+    <div class="modal-card wide">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">Automação Visual</span>
+          <h3 id="generatorTitle">Geração de Peças de Divulgação</h3>
+        </div>
+        <button class="icon-btn" type="button" id="closeGeneratorBtn">×</button>
+      </div>
+
+      <div class="generator-workspace">
+        <aside class="generator-sidebar">
+          <div class="sidebar-block">
+            <label for="genLayoutSelect">Tipo de Layout</label>
+            <select id="genLayoutSelect">
+              <option value="individual">Card Individual (1 Palestrante)</option>
+              <option value="duplo">Card Duplo (2 Palestrantes)</option>
+              <option value="grid">Grid Completo (Curadoria - 6 Palestrantes)</option>
+            </select>
+          </div>
+          <div class="sidebar-block" id="speakerSelectBlock1">
+            <label for="genSpeakerSelect" id="speakerSelectLabel1">Palestrante Selecionado</label>
+            <select id="genSpeakerSelect"></select>
+          </div>
+          <div class="sidebar-block" id="speakerSelectBlock2" style="display: none;">
+            <label for="genSpeakerSelect2">Segundo Palestrante</label>
+            <select id="genSpeakerSelect2"></select>
+          </div>
+          <div class="sidebar-block">
+            <label for="genTemplateSelect">Template do Card</label>
+            <select id="genTemplateSelect">
+              <option value="neon">Conectividade Neon (Roxo/Laranja)</option>
+              <option value="cyber">Saúde Digital (Azul/Magenta)</option>
+              <option value="aurora">Aurora (Teal/Verde/Roxo)</option>
+              <option value="minimal">Corporativo Clean (Gradiente Sutil)</option>
+            </select>
+          </div>
+          <div class="sidebar-block presets-checklist">
+            <strong>Formatos de Saída</strong>
+            <label><input type="checkbox" id="checkFeed" checked> Feed 1080x1080</label>
+            <label><input type="checkbox" id="checkStory" checked> Story 1080x1920</label>
+            <label><input type="checkbox" id="checkBanner" checked> Banner 1600x900</label>
+            <label><input type="checkbox" id="checkSite" checked> Card Site 800x1000</label>
+          </div>
+          <div class="sidebar-block button-block">
+            <button class="primary-btn full" id="downloadSelectedPresetsBtn" type="button">Download das Peças Selecionadas</button>
+          </div>
+        </aside>
+
+        <!-- Dynamic previews area (uses HTML/CSS rendering) -->
+        <main class="generator-previews-container">
+          <!-- Feed Preview -->
+          <div class="preset-preview-box" id="presetBoxFeed">
+            <div class="preset-box-header">
+              <span>Feed (1080x1080)</span>
+              <button class="mini-btn" type="button" id="downloadFeedSingleBtn">Download PNG</button>
+            </div>
+            <div class="preset-canvas-wrapper" style="aspect-ratio: 1/1;">
+              <div class="card-canvas-mock" id="mockFeed">
+                <!-- Inner structure updated by JavaScript -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Story Preview -->
+          <div class="preset-preview-box" id="presetBoxStory">
+            <div class="preset-box-header">
+              <span>Story (1080x1920)</span>
+              <button class="mini-btn" type="button" id="downloadStorySingleBtn">Download PNG</button>
+            </div>
+            <div class="preset-canvas-wrapper" style="aspect-ratio: 1080/1920;">
+              <div class="card-canvas-mock" id="mockStory">
+                <!-- Inner structure updated by JavaScript -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Banner Preview -->
+          <div class="preset-preview-box" id="presetBoxBanner">
+            <div class="preset-box-header">
+              <span>Banner (1600x900)</span>
+              <button class="mini-btn" type="button" id="downloadBannerSingleBtn">Download PNG</button>
+            </div>
+            <div class="preset-canvas-wrapper" style="aspect-ratio: 1600/900;">
+              <div class="card-canvas-mock" id="mockBanner">
+                <!-- Inner structure updated by JavaScript -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Site Card Preview -->
+          <div class="preset-preview-box" id="presetBoxSite">
+            <div class="preset-box-header">
+              <span>Card Site (800x1000)</span>
+              <button class="mini-btn" type="button" id="downloadSiteSingleBtn">Download PNG</button>
+            </div>
+            <div class="preset-canvas-wrapper" style="aspect-ratio: 800/1000;">
+              <div class="card-canvas-mock" id="mockSite">
+                <!-- Inner structure updated by JavaScript -->
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Developer API & Database Console Logs Drawer -->
+  <div class="dev-console-drawer collapsed" id="devConsole">
+    <div class="console-header" id="devConsoleHeader">
+      <div class="console-title">
+        <span class="console-dot"></span>
+        <strong>API Explorer & Prisma Logger (Banco de Dados Local)</strong>
+      </div>
+      <div class="console-actions">
+        <button class="console-btn" id="clearLogsBtn" type="button">Limpar</button>
+        <button class="console-btn" id="toggleConsoleBtn" type="button">Minimizar</button>
+      </div>
+    </div>
+    <div class="console-body" id="consoleLogs">
+      <!-- Logs added here by JavaScript -->
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- Hidden canvas for rendering image generation files -->
+  <canvas id="exportCanvas" style="display: none;"></canvas>
+
+  <!-- Firebase SDKs compat -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="firebase.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
