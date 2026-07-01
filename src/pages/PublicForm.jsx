@@ -6,6 +6,8 @@ import Accommodation from '../components/Accommodation';
 import Networking from '../components/Networking';
 import Companion from '../components/Companion';
 import ChildrenList from '../components/ChildrenList';
+import DressCode from '../components/DressCode';
+import Logistics from '../components/Logistics';
 
 const defaultEvent = {
   title: 'Healthcare Conference 2026',
@@ -45,7 +47,14 @@ const initialForm = {
     tshirt: 'P',
     dietary: ''
   },
-  children: []
+  children: [],
+  logistics: {
+    arrival: '',
+    needsTransfer: '',
+    airport: '',
+    flightNumber: '',
+    arrivalTime: ''
+  }
 };
 
 function PublicForm({ slug }) {
@@ -104,6 +113,10 @@ function PublicForm({ slug }) {
         type
       }
     }));
+  }
+
+  function updateLogistics(field, value) {
+    updateSection('logistics', field, value);
   }
 
   function addChild() {
@@ -201,7 +214,8 @@ function PublicForm({ slug }) {
           dietary: form.companion.dietary
         } : null,
         children: form.children
-      }
+        },
+        logistics: form.logistics
     };
 
     const { error: responseError } = await supabase.from('form_responses').insert(response);
@@ -251,7 +265,9 @@ function PublicForm({ slug }) {
         <PersonalData value={form.personal} onChange={updatePersonal} />
         <Accommodation value={form.accommodation} onChange={updateAccommodation} />
         <Networking value={form.networking} onChange={updateNetworking} />
-        <Companion
+          <DressCode />
+          <Logistics value={form.logistics} onChange={updateLogistics} />
+          <Companion
           value={form.companion}
           onSetType={setCompanionType}
           onChangeDetails={updateCompanion}
