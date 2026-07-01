@@ -227,7 +227,7 @@ function PublicForm({ slug }) {
         <div className="card success">
           <CheckCircle2 size={44} />
           <h1>Inscrição recebida!</h1>
-          <p>Obrigado. Sua credencial foi registrada no GM Connect.</p>
+          <p>Obrigado. Sua credencial foi registrada com sucesso no Healthcare Conference 2026.</p>
           <button type="button" className="button" onClick={() => window.location.reload()}>
             Nova inscrição
           </button>
