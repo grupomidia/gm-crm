@@ -8,8 +8,16 @@ function Networking({ value, onChange }) {
         <p>Autorize o uso dos dados e indique interesse em reuniões de negócios.</p>
       </div>
       <div className="networkingContent">
-        <label className="check"><input type="checkbox" checked={value.authorizeSharing} onChange={e => onChange('authorizeSharing', e.target.checked)} /><strong>Autorizo o compartilhamento dos meus dados para comunicação sobre o evento. *</strong></label>
-        <label className="check"><input type="checkbox" checked={value.businessMeetings} onChange={e => onChange('businessMeetings', e.target.checked)} /><strong>Tenho interesse em participar das reuniões de negócios com patrocinadores. *</strong></label>
+        <label className="check">
+          <input type="checkbox" checked={value.authorizeSharing} onChange={e => onChange('authorizeSharing', e.target.checked)} />
+          <strong style={{ fontWeight: 600 }}>Autorizo o compartilhamento dos meus dados para comunicação sobre o evento.</strong>
+          <span style={{ color: 'var(--error)', marginLeft: 6, fontWeight: 800 }}>*</span>
+        </label>
+        <label className="check">
+          <input type="checkbox" checked={value.businessMeetings} onChange={e => onChange('businessMeetings', e.target.checked)} />
+          <strong style={{ fontWeight: 600 }}>Tenho interesse em participar das reuniões de negócios com patrocinadores.</strong>
+          <span style={{ color: 'var(--error)', marginLeft: 6, fontWeight: 800 }}>*</span>
+        </label>
       </div>
     </section>
   );
