@@ -8,6 +8,7 @@ import Companion from '../components/Companion';
 import ChildrenList from '../components/ChildrenList';
 import DressCode from '../components/DressCode';
 import Logistics from '../components/Logistics';
+import ValidationModal from '../components/ValidationModal';
 
 const defaultEvent = {
   title: 'Healthcare Conference 2026',
@@ -63,6 +64,13 @@ function PublicForm({ slug }) {
   const [loading, setLoading] = React.useState(true);
   const [sent, setSent] = React.useState(false);
   const [error, setError] = React.useState('');
+  const [validationModalOpen, setValidationModalOpen] = React.useState(false);
+  const [validationMessage, setValidationMessage] = React.useState('');
+
+  function showValidation(msg) {
+    setValidationMessage(msg);
+    setValidationModalOpen(true);
+  }
 
   React.useEffect(() => {
     async function loadEvent() {
@@ -149,32 +157,32 @@ function PublicForm({ slug }) {
     // Validação - Dados Pessoais (obrigatórios)
     const { name, email, company, phone } = form.personal;
     if (!name || !email || !company || !phone) {
-      setError('Preencha nome, e-mail, empresa e celular (seção Dados Pessoais).');
+      showValidation('Preencha nome, e-mail, empresa e celular (seção Dados Pessoais).');
       return;
     }
 
     // Validação - Comunicação e Networking (obrigatórios)
     if (!form.networking.authorizeSharing) {
-      setError('Você deve autorizar o compartilhamento de dados (Comunicação e networking).');
+      showValidation('Você deve autorizar o compartilhamento de dados (Comunicação e networking).');
       return;
     }
     if (!form.networking.businessMeetings) {
-      setError('Você deve indicar interesse nas reuniões de negócios (Comunicação e networking).');
+      showValidation('Você deve indicar interesse nas reuniões de negócios (Comunicação e networking).');
       return;
     }
 
     // Validação - Logística de Chegada (obrigatórios)
     if (!form.logistics.arrival) {
-      setError('Selecione como pretende chegar a Ribeirão Preto (Logística de Chegada).');
+      showValidation('Selecione como pretende chegar a Ribeirão Preto (Logística de Chegada).');
       return;
     }
     if (!form.logistics.needsTransfer) {
-      setError('Indique se precisará de transfer (Logística de Chegada).');
+      showValidation('Indique se precisará de transfer (Logística de Chegada).');
       return;
     }
     if (form.logistics.arrival === 'Avião') {
       if (!form.logistics.airport || !form.logistics.flightNumber || !form.logistics.arrivalTime) {
-        setError('Preencha aeroporto, número do voo e horário de chegada (Logística de Chegada - Voo).');
+        showValidation('Preencha aeroporto, número do voo e horário de chegada (Logística de Chegada - Voo).');
         return;
       }
     }
@@ -182,11 +190,11 @@ function PublicForm({ slug }) {
     // Validação - Acompanhante (se SIM, campos obrigatórios)
     if (form.companion.type !== 'no') {
       if (!form.companion.name || !form.companion.cpf || !form.companion.rg || !form.companion.phone || !form.companion.address) {
-        setError('Preencha todos os dados do acompanhante: nome, CPF, RG, telefone e endereço.');
+        showValidation('Preencha todos os dados do acompanhante: nome, CPF, RG, telefone e endereço.');
         return;
       }
       if (form.companion.participateForum === null || form.companion.participateForum === undefined) {
-        setError('Indique se o acompanhante vai participar do fórum.');
+        showValidation('Indique se o acompanhante vai participar do fórum.');
         return;
       }
     }
@@ -299,9 +307,12 @@ function PublicForm({ slug }) {
         <p className="muted"><CalendarDays size={16} /> 17/09/2026: Check-in no Hotel a partir das 15h.</p>
         <p className="muted"><CalendarDays size={16} /> 20/09/2026: Check-out no Hotel às 12h</p>
 
+        <p className="required-legend"><span className="red-asterisk">*</span> Campos obrigatórios</p>
+
         {error && <div className="error">{error}</div>}
 
         <PersonalData value={form.personal} onChange={updatePersonal} />
+        <ValidationModal open={validationModalOpen} onClose={() => setValidationModalOpen(false)} message={validationMessage} />
         <Accommodation value={form.accommodation} onChange={updateAccommodation} />
         <Networking value={form.networking} onChange={updateNetworking} />
           <DressCode />
