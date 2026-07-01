@@ -30,6 +30,7 @@ create table if not exists form_responses (
   contact_id uuid references contacts(id) on delete set null,
   status text default 'confirmado',
   answers jsonb default '{}',
+  logistics jsonb default '{}',
   token text,
   created_at timestamptz default now()
 );

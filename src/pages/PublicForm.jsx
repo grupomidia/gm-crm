@@ -214,8 +214,8 @@ function PublicForm({ slug }) {
           dietary: form.companion.dietary
         } : null,
         children: form.children
-        },
-        logistics: form.logistics
+      },
+      logistics: form.logistics
     };
 
     const { error: responseError } = await supabase.from('form_responses').insert(response);
