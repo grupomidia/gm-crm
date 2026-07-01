@@ -9,7 +9,7 @@ function Logistics({ value, onChange }) {
       </div>
 
       <fieldset style={{ border: '1px solid var(--line)', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
-        <legend style={{ fontWeight: '800', color: 'var(--brand)', paddingLeft: '8px', paddingRight: '8px' }}>Como pretende chegar a Ribeirão Preto?</legend>
+        <legend style={{ fontWeight: '800', color: 'var(--brand)', paddingLeft: '8px', paddingRight: '8px' }}>Como pretende chegar a Ribeirão Preto? *</legend>
         <div className="radioGroup" style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
           {['Avião', 'Carro', 'Ônibus', 'Ainda não definido', 'Outro'].map(option => (
             <label key={option} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
@@ -27,7 +27,7 @@ function Logistics({ value, onChange }) {
       </fieldset>
 
       <fieldset style={{ border: '1px solid var(--line)', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
-        <legend style={{ fontWeight: '800', color: 'var(--brand)', paddingLeft: '8px', paddingRight: '8px' }}>Você precisará de transfer (aeroporto/hotel)?</legend>
+        <legend style={{ fontWeight: '800', color: 'var(--brand)', paddingLeft: '8px', paddingRight: '8px' }}>Você precisará de transfer (aeroporto/hotel)? *</legend>
         <div className="radioGroup" style={{ display: 'flex', gap: '16px' }}>
           {['SIM', 'NÃO'].map(option => (
             <label key={option} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
@@ -46,7 +46,7 @@ function Logistics({ value, onChange }) {
 
       {value.arrival === 'Avião' && (
         <div className="card" style={{ background: 'var(--bg)', border: '1px solid var(--line)', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
-          <label><strong>Aeroporto de chegada</strong>
+          <label><strong>Aeroporto de chegada *</strong>
             <select value={value.airport} onChange={e => onChange('airport', e.target.value)}>
               <option value="">-- Selecione --</option>
               <option value="Ribeirão Preto">Ribeirão Preto</option>
@@ -57,14 +57,14 @@ function Logistics({ value, onChange }) {
           </label>
 
           <div className="grid two">
-            <label><strong>Número do voo</strong>
+            <label><strong>Número do voo *</strong>
               <input
                 value={value.flightNumber}
                 onChange={e => onChange('flightNumber', e.target.value)}
                 placeholder="Ex: AA123"
               />
             </label>
-            <label><strong>Horário de chegada</strong>
+            <label><strong>Horário de chegada *</strong>
               <input
                 type="time"
                 value={value.arrivalTime}

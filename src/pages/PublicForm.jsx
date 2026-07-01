@@ -146,10 +146,49 @@ function PublicForm({ slug }) {
     eventSubmit.preventDefault();
     setError('');
 
+    // Validação - Dados Pessoais (obrigatórios)
     const { name, email, company, phone } = form.personal;
     if (!name || !email || !company || !phone) {
-      setError('Preencha nome, e-mail, empresa e celular.');
+      setError('Preencha nome, e-mail, empresa e celular (seção Dados Pessoais).');
       return;
+    }
+
+    // Validação - Comunicação e Networking (obrigatórios)
+    if (!form.networking.authorizeSharing) {
+      setError('Você deve autorizar o compartilhamento de dados (Comunicação e networking).');
+      return;
+    }
+    if (!form.networking.businessMeetings) {
+      setError('Você deve indicar interesse nas reuniões de negócios (Comunicação e networking).');
+      return;
+    }
+
+    // Validação - Logística de Chegada (obrigatórios)
+    if (!form.logistics.arrival) {
+      setError('Selecione como pretende chegar a Ribeirão Preto (Logística de Chegada).');
+      return;
+    }
+    if (!form.logistics.needsTransfer) {
+      setError('Indique se precisará de transfer (Logística de Chegada).');
+      return;
+    }
+    if (form.logistics.arrival === 'Avião') {
+      if (!form.logistics.airport || !form.logistics.flightNumber || !form.logistics.arrivalTime) {
+        setError('Preencha aeroporto, número do voo e horário de chegada (Logística de Chegada - Voo).');
+        return;
+      }
+    }
+
+    // Validação - Acompanhante (se SIM, campos obrigatórios)
+    if (form.companion.type !== 'no') {
+      if (!form.companion.name || !form.companion.cpf || !form.companion.rg || !form.companion.phone || !form.companion.address) {
+        setError('Preencha todos os dados do acompanhante: nome, CPF, RG, telefone e endereço.');
+        return;
+      }
+      if (form.companion.participateForum === null || form.companion.participateForum === undefined) {
+        setError('Indique se o acompanhante vai participar do fórum.');
+        return;
+      }
     }
 
     if (!isSupabaseConfigured) {
