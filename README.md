@@ -58,3 +58,55 @@ Preencha o arquivo `.env` com os dados do Supabase.
 - `/` página inicial
 - `/form/healthcare-conference-2026` formulário público
 - `/admin` painel simples
+
+## Plataformas — Git, Vercel e Supabase
+
+Este repositório usa Git, Vercel (deploy) e Supabase (banco/backend). Abaixo estão instruções rápidas para retomar o trabalho em outro computador.
+
+- Git
+   - Remote: https://github.com/grupomidia/gm-crm.git
+   - Clonar: `git clone https://github.com/grupomidia/gm-crm.git`
+   - Branch principal: `main`
+   - Se o Git reclamar sobre identidade local, configure:
+
+      ```bash
+      git config --global user.name "Seu Nome"
+      git config --global user.email "seu@email"
+      ```
+
+- Vercel
+   - Login no painel da Vercel e importe o repositório `grupomidia/gm-crm`.
+   - Defina estas variáveis de ambiente no projeto Vercel:
+      - `VITE_SUPABASE_URL`
+      - `VITE_SUPABASE_ANON_KEY`
+   - Build command: `npm run build`
+   - Output directory: `dist`
+   - Para forçar um novo deploy: faça push na branch `main` ou clique em "Deploy" no painel.
+
+- Supabase
+   - Crie/abra seu projeto em https://app.supabase.com.
+   - Vá para **SQL editor** e rode o conteúdo de `supabase/schema.sql` para criar as tabelas iniciais.
+   - As migrations adicionais estão em `supabase/migrations/` — aplique em ordem se necessário via SQL editor.
+   - Obtenha `Project URL` e `anon public key` em Project Settings > API e coloque-os em `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`.
+   - Nunca comite o arquivo `.env` com chaves reais.
+
+Passos rápidos para retomar localmente:
+
+```bash
+git clone https://github.com/grupomidia/gm-crm.git
+cd gm-crm
+npm install
+cp .env.example .env
+# editar .env com VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY
+npm run dev
+```
+
+Rodar testes localmente:
+
+```bash
+npm ci
+npm test
+```
+
+CI: existe um workflow em `.github/workflows/ci.yml` que executa os testes em push/PR para `main`.
+
