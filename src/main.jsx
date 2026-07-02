@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { CalendarDays, CheckCircle2, Download, Search, Users } from 'lucide-react';
-import { supabase, isSupabaseConfigured } from './lib/supabase';
+import { supabase, isSupabaseConfigured, getSupabaseErrorMessage } from './lib/supabase';
 import PublicForm from './pages/PublicForm';
 import './styles.css';
 
@@ -37,15 +37,17 @@ function Admin() {
   const [rows, setRows] = React.useState([]);
   const [query, setQuery] = React.useState('');
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState('');
 
   React.useEffect(() => { load(); }, []);
 
   async function load() {
     if (!isSupabaseConfigured) { setRows([]); setLoading(false); return; }
-    const { data } = await supabase
+    const { data, error: loadError } = await supabase
       .from('form_responses')
       .select('id, status, created_at, answers, contacts(name,email,phone,company,role,segment)')
       .order('created_at', { ascending: false });
+    if (loadError) setError(getSupabaseErrorMessage(loadError));
     setRows(data || []);
     setLoading(false);
   }
@@ -83,6 +85,7 @@ function Admin() {
         <Metric icon={<CheckCircle2/>} label="Confirmados" value={filtered.filter(r => r.status === 'confirmado').length}/>
         <Metric icon={<CalendarDays/>} label="Eventos ativos" value="1"/>
       </section>
+      {error && <div className="error">{error}</div>}
       <div className="toolbar"><Search size={18}/><input placeholder="Buscar por nome, empresa ou e-mail" value={query} onChange={e => setQuery(e.target.value)} /></div>
       <section className="tableCard">
         {loading ? <p>Carregando...</p> : <table><thead><tr><th>Nome</th><th>Empresa</th><th>Cargo</th><th>Segmento</th><th>Status</th></tr></thead><tbody>{filtered.map(row => { const c = row.contacts || {}; return <tr key={row.id}><td><strong>{c.name}</strong><small>{c.email}</small></td><td>{c.company}</td><td>{c.role}</td><td>{c.segment}</td><td><span className="pill">{row.status}</span></td></tr>; })}</tbody></table>}
