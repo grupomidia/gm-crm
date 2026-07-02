@@ -4,3 +4,6 @@ dist/
 *.csv
 *.exe
 *.webp
+*.log
+vite-dev.err.log
+vite-dev.out.log
