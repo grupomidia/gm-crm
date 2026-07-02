@@ -1,6 +1,6 @@
 import React from 'react';
 import { CalendarDays, CheckCircle2 } from 'lucide-react';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, getSupabaseErrorMessage } from '../lib/supabase';
 import PersonalData from '../components/PersonalData';
 import Accommodation from '../components/Accommodation';
 import Networking from '../components/Networking';
@@ -79,7 +79,8 @@ function PublicForm({ slug }) {
         return;
       }
 
-      const { data } = await supabase.from('events').select('*').eq('slug', slug).single();
+      const { data, error: eventError } = await supabase.from('events').select('*').eq('slug', slug).single();
+      if (eventError) setError(getSupabaseErrorMessage(eventError));
       if (data) setEvent(data);
       setLoading(false);
     }
@@ -219,7 +220,7 @@ function PublicForm({ slug }) {
       .single();
 
     if (contactError) {
-      setError(contactError.message);
+      setError(getSupabaseErrorMessage(contactError));
       return;
     }
 
@@ -249,6 +250,7 @@ function PublicForm({ slug }) {
           authorizeSharing: form.networking.authorizeSharing,
           businessMeetings: form.networking.businessMeetings
         },
+        logistics: form.logistics,
         companion: form.companion.type !== 'no' ? {
           type: form.companion.type,
           participateForum: form.companion.participateForum,
@@ -261,13 +263,12 @@ function PublicForm({ slug }) {
           dietary: form.companion.dietary
         } : null,
         children: form.children
-      },
-      logistics: form.logistics
+      }
     };
 
     const { error: responseError } = await supabase.from('form_responses').insert(response);
     if (responseError) {
-      setError(responseError.message);
+      setError(getSupabaseErrorMessage(responseError));
       return;
     }
 
@@ -287,8 +288,8 @@ function PublicForm({ slug }) {
       <main className="center">
         <div className="card success">
           <CheckCircle2 size={44} />
-          <h1>Inscrição recebida!</h1>
-          <p>Obrigado. Sua credencial foi registrada com sucesso no Healthcare Conference 2026.</p>
+          <h1>Credencial recebida com sucesso!</h1>
+          <p>Obrigado. Seus dados foram registrados para o Healthcare Conference 2026.</p>
           <button type="button" className="button" onClick={() => window.location.reload()}>
             Nova inscrição
           </button>
