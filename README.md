@@ -1,5 +1,7 @@
 # GM Connect — CRM Forms do Grupo Mídia
 
+[![CI](https://github.com/grupomidia/gm-crm/actions/workflows/ci.yml/badge.svg)](https://github.com/grupomidia/gm-crm/actions/workflows/ci.yml)
+
 MVP em React + JavaScript + Supabase gratuito, pronto para deploy na Vercel.
 
 ## Recursos
