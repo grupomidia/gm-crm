@@ -58,20 +58,134 @@ function Admin() {
   });
 
   function exportCsv() {
-    const header = ['Nome','Email','Telefone','Empresa','Cargo','Segmento','Status','Data'];
-    const lines = filtered.map(row => {
-      const c = row.contacts || {};
-      return [c.name,c.email,c.phone,c.company,c.role,c.segment,row.status,new Date(row.created_at).toLocaleString('pt-BR')]
-        .map(value => `"${String(value || '').replaceAll('"','""')}"`).join(',');
-    });
-    const blob = new Blob([[header.join(','), ...lines].join('\n')], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'gm-connect-inscritos.csv';
-    a.click();
-    URL.revokeObjectURL(url);
-  }
+  const header = [
+    'Nome',
+    'Email',
+    'Telefone',
+    'Empresa',
+    'Cargo',
+    'Segmento',
+    'Status',
+    'Data',
+
+    'CPF',
+    'RG',
+    'Data de nascimento',
+    'Endereco',
+
+    'Camiseta',
+    'Restricao alimentar',
+
+    'Autoriza compartilhamento',
+    'Interesse reunioes de negocios',
+
+    'Chegada',
+    'Precisa de transfer',
+    'Aeroporto',
+    'Numero do voo',
+    'Horario de chegada',
+
+    'Tipo de acompanhante',
+    'Acompanhante participa do forum',
+    'Nome acompanhante',
+    'CPF acompanhante',
+    'RG acompanhante',
+    'Telefone acompanhante',
+    'Endereco acompanhante',
+    'Camiseta acompanhante',
+    'Restricao alimentar acompanhante',
+
+    'Criancas'
+  ];
+
+  const formatBoolean = (value) => {
+    if (value === true) return 'Sim';
+    if (value === false) return 'Nao';
+    return '';
+  };
+
+  const formatChildren = (children) => {
+    if (!Array.isArray(children) || children.length === 0) return '';
+
+    return children
+      .map((child, index) => {
+        const name = child?.name || '';
+        const birth = child?.birth || '';
+        return `Crianca ${index + 1}: ${name}${birth ? ` - ${birth}` : ''}`;
+      })
+      .join(' | ');
+  };
+
+  const escapeCsv = (value) =>
+    `"${String(value ?? '').replaceAll('"', '""')}"`;
+
+  const lines = filtered.map((row) => {
+    const c = row.contacts || {};
+    const answers = row.answers || {};
+    const personal = answers.personal || {};
+    const accommodation = answers.accommodation || {};
+    const networking = answers.networking || {};
+    const logistics = answers.logistics || {};
+    const companion = answers.companion || {};
+
+    const values = [
+      c.name,
+      c.email,
+      c.phone,
+      c.company,
+      c.role,
+      c.segment,
+      row.status,
+      row.created_at ? new Date(row.created_at).toLocaleString('pt-BR') : '',
+
+      personal.cpf,
+      personal.rg,
+      personal.birth,
+      personal.address,
+
+      accommodation.tshirt,
+      accommodation.dietary,
+
+      formatBoolean(networking.authorizeSharing),
+      formatBoolean(networking.businessMeetings),
+
+      logistics.arrival,
+      formatBoolean(logistics.needsTransfer),
+      logistics.airport,
+      logistics.flightNumber,
+      logistics.arrivalTime,
+
+      companion.type,
+      formatBoolean(companion.participateForum),
+      companion.name,
+      companion.cpf,
+      companion.rg,
+      companion.phone,
+      companion.address,
+      companion.tshirt,
+      companion.dietary,
+
+      formatChildren(answers.children)
+    ];
+
+    return values.map(escapeCsv).join(',');
+  });
+
+  const csvContent = '\uFEFF' + [header.join(','), ...lines].join('\n');
+
+  const blob = new Blob([csvContent], {
+    type: 'text/csv;charset=utf-8;'
+  });
+
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'gm-connect-inscritos.csv';
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
 
   return (
     <main className="admin">
