@@ -1,6 +1,7 @@
 import React from 'react';
 import { CalendarDays, CheckCircle2 } from 'lucide-react';
 import { supabase, isSupabaseConfigured, getSupabaseErrorMessage } from '../lib/supabase';
+
 import PersonalData from '../components/PersonalData';
 import Accommodation from '../components/Accommodation';
 import Networking from '../components/Networking';
@@ -72,6 +73,24 @@ function PublicForm({ slug }) {
     setValidationModalOpen(true);
   }
 
+  async function sendRegistrationNotification(payload) {
+    try {
+      const response = await fetch('/api/notify-registration', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        console.warn('Notificação não enviada:', await response.text());
+      }
+    } catch (notificationError) {
+      console.error('Erro ao enviar notificação:', notificationError);
+    }
+  }
+
   React.useEffect(() => {
     async function loadEvent() {
       if (!isSupabaseConfigured) {
@@ -79,9 +98,15 @@ function PublicForm({ slug }) {
         return;
       }
 
-      const { data, error: eventError } = await supabase.from('events').select('*').eq('slug', slug).single();
+      const { data, error: eventError } = await supabase
+        .from('events')
+        .select('*')
+        .eq('slug', slug)
+        .single();
+
       if (eventError) setError(getSupabaseErrorMessage(eventError));
       if (data) setEvent(data);
+
       setLoading(false);
     }
 
@@ -89,7 +114,7 @@ function PublicForm({ slug }) {
   }, [slug]);
 
   function updateSection(section, field, value) {
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
       [section]: {
         ...prev[section],
@@ -115,7 +140,7 @@ function PublicForm({ slug }) {
   }
 
   function setCompanionType(type) {
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
       companion: {
         ...prev.companion,
@@ -129,14 +154,14 @@ function PublicForm({ slug }) {
   }
 
   function addChild() {
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
       children: [...prev.children, { name: '', birth: '' }]
     }));
   }
 
   function updateChild(index, field, value) {
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
       children: prev.children.map((child, idx) =>
         idx === index ? { ...child, [field]: value } : child
@@ -145,7 +170,7 @@ function PublicForm({ slug }) {
   }
 
   function removeChild(index) {
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
       children: prev.children.filter((_, idx) => idx !== index)
     }));
@@ -155,32 +180,33 @@ function PublicForm({ slug }) {
     eventSubmit.preventDefault();
     setError('');
 
-    // Validação - Dados Pessoais (obrigatórios)
     const { name, email, company, phone } = form.personal;
+
     if (!name || !email || !company || !phone) {
       showValidation('Preencha nome, e-mail, empresa e celular (seção Dados Pessoais).');
       return;
     }
 
-    // Validação - Comunicação e Networking (obrigatórios)
     if (!form.networking.authorizeSharing) {
       showValidation('Você deve autorizar o compartilhamento de dados (Comunicação e networking).');
       return;
     }
+
     if (!form.networking.businessMeetings) {
       showValidation('Você deve indicar interesse nas reuniões de negócios (Comunicação e networking).');
       return;
     }
 
-    // Validação - Logística de Chegada (obrigatórios)
     if (!form.logistics.arrival) {
       showValidation('Selecione como pretende chegar a Ribeirão Preto (Logística de Chegada).');
       return;
     }
+
     if (!form.logistics.needsTransfer) {
       showValidation('Indique se precisará de transfer (Logística de Chegada).');
       return;
     }
+
     if (form.logistics.arrival === 'Avião') {
       if (!form.logistics.airport || !form.logistics.flightNumber || !form.logistics.arrivalTime) {
         showValidation('Preencha aeroporto, número do voo e horário de chegada (Logística de Chegada - Voo).');
@@ -188,12 +214,18 @@ function PublicForm({ slug }) {
       }
     }
 
-    // Validação - Acompanhante (se SIM, campos obrigatórios)
     if (form.companion.type !== 'no') {
-      if (!form.companion.name || !form.companion.cpf || !form.companion.rg || !form.companion.phone || !form.companion.address) {
+      if (
+        !form.companion.name ||
+        !form.companion.cpf ||
+        !form.companion.rg ||
+        !form.companion.phone ||
+        !form.companion.address
+      ) {
         showValidation('Preencha todos os dados do acompanhante: nome, CPF, RG, telefone e endereço.');
         return;
       }
+
       if (form.companion.participateForum === null || form.companion.participateForum === undefined) {
         showValidation('Indique se o acompanhante vai participar do fórum.');
         return;
@@ -207,15 +239,18 @@ function PublicForm({ slug }) {
 
     const { data: contact, error: contactError } = await supabase
       .from('contacts')
-      .upsert({
-        name: form.personal.name,
-        email: form.personal.email,
-        phone: form.personal.phone,
-        company: form.personal.company,
-        role: form.personal.role,
-        segment: 'Participante',
-        tags: [form.accommodation.tshirt]
-      }, { onConflict: 'email' })
+      .upsert(
+        {
+          name: form.personal.name,
+          email: form.personal.email,
+          phone: form.personal.phone,
+          company: form.personal.company,
+          role: form.personal.role,
+          segment: 'Participante',
+          tags: [form.accommodation.tshirt]
+        },
+        { onConflict: 'email' }
+      )
       .select()
       .single();
 
@@ -251,26 +286,43 @@ function PublicForm({ slug }) {
           businessMeetings: form.networking.businessMeetings
         },
         logistics: form.logistics,
-        companion: form.companion.type !== 'no' ? {
-          type: form.companion.type,
-          participateForum: form.companion.participateForum,
-          name: form.companion.name,
-          cpf: form.companion.cpf,
-          rg: form.companion.rg,
-          phone: form.companion.phone,
-          address: form.companion.address,
-          tshirt: form.companion.tshirt,
-          dietary: form.companion.dietary
-        } : null,
+        companion:
+          form.companion.type !== 'no'
+            ? {
+                type: form.companion.type,
+                participateForum: form.companion.participateForum,
+                name: form.companion.name,
+                cpf: form.companion.cpf,
+                rg: form.companion.rg,
+                phone: form.companion.phone,
+                address: form.companion.address,
+                tshirt: form.companion.tshirt,
+                dietary: form.companion.dietary
+              }
+            : null,
         children: form.children
       }
     };
 
-    const { error: responseError } = await supabase.from('form_responses').insert(response);
+    const { error: responseError } = await supabase
+      .from('form_responses')
+      .insert(response);
+
     if (responseError) {
       setError(getSupabaseErrorMessage(responseError));
       return;
     }
+
+    await sendRegistrationNotification({
+      eventName: event?.title || 'Healthcare Conference 2026',
+      name: form.personal.name,
+      email: form.personal.email,
+      phone: form.personal.phone,
+      company: form.personal.company,
+      role: form.personal.role,
+      segment: 'Participante',
+      answers: response.answers
+    });
 
     setSent(true);
   }
@@ -288,8 +340,11 @@ function PublicForm({ slug }) {
       <main className="center">
         <div className="card success">
           <CheckCircle2 size={44} />
+
           <h1>Credencial recebida com sucesso!</h1>
+
           <p>Obrigado. Seus dados foram registrados para o Healthcare Conference 2026.</p>
+
           <button type="button" className="button" onClick={() => window.location.reload()}>
             Nova inscrição
           </button>
@@ -302,27 +357,51 @@ function PublicForm({ slug }) {
     <main className="formPage">
       <form className="formCard" onSubmit={submit}>
         <ConfigWarning />
-        <div className="badge">Credenciamento</div>
-        <h2 style={{ lineHeight: 1.2 }}>HOSPEDAGEM - HEALTHCARE CONFERENCE 2026</h2>
-        <p><strong>17 A 20 DE SETEMBRO DE 2026</strong></p>
-        <p className="muted"><CalendarDays size={16} /> 17/09/2026: Check-in no Hotel a partir das 15h.</p>
-        <p className="muted"><CalendarDays size={16} /> 20/09/2026: Check-out no Hotel às 12h</p>
 
-        <p className="required-legend"><span className="red-asterisk">*</span> Campos obrigatórios</p>
+        <div className="badge">Credenciamento</div>
+
+        <h2 style={{ lineHeight: 1.2 }}>HOSPEDAGEM - HEALTHCARE CONFERENCE 2026</h2>
+
+        <p>
+          <strong>17 A 20 DE SETEMBRO DE 2026</strong>
+        </p>
+
+        <p className="muted">
+          <CalendarDays size={16} /> 17/09/2026: Check-in no Hotel a partir das 15h.
+        </p>
+
+        <p className="muted">
+          <CalendarDays size={16} /> 20/09/2026: Check-out no Hotel às 12h
+        </p>
+
+        <p className="required-legend">
+          <span className="red-asterisk">*</span> Campos obrigatórios
+        </p>
 
         {error && <div className="error">{error}</div>}
 
         <PersonalData value={form.personal} onChange={updatePersonal} />
-        <ValidationModal open={validationModalOpen} onClose={() => setValidationModalOpen(false)} message={validationMessage} />
+
+        <ValidationModal
+          open={validationModalOpen}
+          onClose={() => setValidationModalOpen(false)}
+          message={validationMessage}
+        />
+
         <Accommodation value={form.accommodation} onChange={updateAccommodation} />
+
         <Networking value={form.networking} onChange={updateNetworking} />
-          <DressCode />
-          <Logistics value={form.logistics} onChange={updateLogistics} />
-          <Companion
+
+        <DressCode />
+
+        <Logistics value={form.logistics} onChange={updateLogistics} />
+
+        <Companion
           value={form.companion}
           onSetType={setCompanionType}
           onChangeDetails={updateCompanion}
         />
+
         <ChildrenList
           children={form.children}
           onAdd={addChild}
@@ -338,7 +417,12 @@ function PublicForm({ slug }) {
 
 function ConfigWarning() {
   if (isSupabaseConfigured) return null;
-  return <div className="warning">Configure o arquivo <strong>.env</strong> com as chaves do Supabase para salvar dados reais.</div>;
+
+  return (
+    <div className="warning">
+      Configure o arquivo <strong>.env</strong> com as chaves do Supabase para salvar dados reais.
+    </div>
+  );
 }
 
 export default PublicForm;
